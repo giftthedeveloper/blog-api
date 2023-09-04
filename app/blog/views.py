@@ -1,0 +1,73 @@
+from rest_framework import generics, viewsets, status, response, mixins
+from .models import BlogPost
+from .serializers import BlogPostSerializer
+from ..permissions import CanEditBlogPostPermission
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.filters import SearchFilter
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+from django.db.models import Q
+
+class CustomPagination(PageNumberPagination):
+    #allows max number of 20 posts per page
+    page_size = 20
+    page_size_query_param = 'page_size'  
+    max_page_size = 20
+
+#get specific blogpost with pagination
+class BlogPostViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
+    queryset = BlogPost.objects.all()
+    serializer_class = BlogPostSerializer
+    pagination_class = CustomPagination
+    filter_backends = [SearchFilter]
+    search_fields = ['author__username', 'created_at', 'slug', 'title']
+
+#get all orders with the option of search fields, sorting by field, desc or asc
+class BlogListViewSet(viewsets.GenericViewSet):
+    queryset = BlogPost.objects.all()
+    serializer_class = BlogPostSerializer
+    pagination_class = CustomPagination  
+    filter_backends = [SearchFilter]
+    search_fields = ['author__username', 'created_at', 'slug', 'title']
+    ordering_fields = ['created_at', 'id', 'title', 'author__username', 'slug']
+
+    #to customize swagger to display sort field, sort_order and search parameters
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter('sort_field', openapi.IN_QUERY, description="Field to sort by", type=openapi.TYPE_STRING),
+            openapi.Parameter('sort_order', openapi.IN_QUERY, description="Sort order (asc or desc)", type=openapi.TYPE_STRING, enum=['asc', 'desc']),
+            openapi.Parameter('search', openapi.IN_QUERY, description="Search parameter", type=openapi.TYPE_STRING),
+        ],
+        operation_description="Description of your list operation",
+        responses={200: BlogPostSerializer(many=True)},
+    )
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        search_param = request.query_params.get('search')
+        sort_field = request.query_params.get('sort_field')
+        sort_order = request.query_params.get('sort_order', 'asc')
+
+        # If only the search parameter is provided, filter the queryset based on it.
+        if search_param:
+            queryset = queryset.filter(
+                Q(author__username__icontains=search_param) |
+                Q(created_at__icontains=search_param) |
+                Q(slug__icontains=search_param) |
+                Q(title__icontains=search_param)
+            )
+
+        # Handle sorting based on the provided parameters
+        if sort_field and sort_field in self.ordering_fields:
+            if sort_order == 'asc':
+                queryset = queryset.order_by(sort_field)
+            elif sort_order == 'desc':
+                queryset = queryset.order_by(f'-{sort_field}')
+        elif sort_field:  # Handle invalid sort_field values
+            return response.Response({'detail': 'Invalid sort_field'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(queryset, many=True)
+        page = self.paginate_queryset(serializer.data)
+        return self.get_paginated_response(page)

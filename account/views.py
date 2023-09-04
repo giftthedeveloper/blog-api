@@ -33,6 +33,7 @@ class AdminViewSet(viewsets.ModelViewSet):
         print("this" + password)
         serializer.save(password=self.request.data.get('password'))
 
+
 class LoginViewSet(generics.CreateAPIView):
     serializer_class = LoginSerializer
 
@@ -64,3 +65,4 @@ class LoginViewSet(generics.CreateAPIView):
 
 # class MyTokenObtainPairView(TokenObtainPairView):
 #     serializer_class = MyTokenObtainPairSerializer
+

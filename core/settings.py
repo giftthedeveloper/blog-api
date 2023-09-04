@@ -30,15 +30,20 @@ INSTALLED_APPS = [
 
     #project apps
     'account',
+    'app',
+    
 
     #3rd-party apps
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_yasg',
     'rest_framework_swagger',
+    'ckeditor',
 ]
 
 MIDDLEWARE = [
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -151,3 +156,4 @@ SIMPLE_JWT = {
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend', 
 )
+

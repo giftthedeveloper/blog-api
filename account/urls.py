@@ -20,10 +20,5 @@ urlpatterns= [
     path('auth-admin/<int:pk>/delete-account/', AdminViewSet.as_view({'delete': 'destroy'}), name='user-delete-account'),
 
 
-    #These require smtp mail functionality for added security. commenting out since mail fustionality isn't in the scope of this test
-    # path("activation/<str:uid>/<str:token>/", UserViewSet.as_view({"post": "activation"}), name="activation"),		#to make user become active
-    # path("resend-activation/", UserViewSet.as_view({"post": "resend_activation"}), name="resend-activation"),
-    # path("forgot-password/", UserViewSet.as_view({"post": "reset_password"}), name="forgot-password"),
-    # path("change-password/", UserViewSet.as_view({"post": "set_password"}), name="change-password"),
-    # path("confirm-password-reset/", UserViewSet.as_view({"post": "reset_password_confirm"}), name="confirm-password-reset")
+    # path("auth/password-reset/", UserViewSet.as_view({"post": "reset_password_confirm"}), name="confirm-password-reset")
 ]
