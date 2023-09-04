@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import MyTokenObtainPairSerializer, UserSerializer, LoginSerializer
+from .serializers import  UserSerializer, LoginSerializer
 from rest_framework import viewsets, status, generics
 from .models import User
 from .serializers import UserSerializer, AdminSerializer
@@ -19,7 +19,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         password = self.request.data.get('password')
-        print("this" + password)
         serializer.save(password=self.request.data.get('password'))
  
 #sepration of concerns in roles. to ensure only admins can create an admin and view admin stuffs. Regular users(authors) cannot
@@ -27,7 +26,12 @@ class AdminViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = AdminSerializer
     parser_classes = [FormParser, MultiPartParser]
-    permission_classes  = [IsAdminUser]
+    # permission_classes  = [IsAdminUser]
+
+    def perform_create(self, serializer):
+        password = self.request.data.get('password')
+        print("this" + password)
+        serializer.save(password=self.request.data.get('password'))
 
 class LoginViewSet(generics.CreateAPIView):
     serializer_class = LoginSerializer
@@ -58,5 +62,5 @@ class LoginViewSet(generics.CreateAPIView):
         else:
             return Response({'message': 'Invalid username or password'}, status=status.HTTP_401_UNAUTHORIZED)
 
-class MyTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
+# class MyTokenObtainPairView(TokenObtainPairView):
+#     serializer_class = MyTokenObtainPairSerializer

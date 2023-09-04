@@ -11,9 +11,9 @@ class UserSerializer(serializers.ModelSerializer):
 ]
 
         extra_kwargs = {
-            'password': {'write_only': True},  # Ensure password is not included in response
+            'password': {'write_only': True},  
             'role': {'read_only': True},
-            'id': {'read_only': True},  
+            # 'id': {'read_only': True},  
         }
 
     #enables passsword hashing
@@ -49,14 +49,3 @@ class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField()
 
-
-# class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-#     @classmethod
-#     def get_token(cls, user):
-#         token = super().get_token(user)
-
-#         # Add custom claims
-#         token['role'] = user.role  
-#         token['email'] = user.email
-#         token['username'] = user.username
-#         return token
