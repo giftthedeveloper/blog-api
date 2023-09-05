@@ -1,26 +1,36 @@
 from django.shortcuts import render
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import  UserSerializer, LoginSerializer
+from .serializers import  MyTokenObtainPairSerializer, UserCreateSerializer, LoginSerializer
 from rest_framework import viewsets, status, generics
 from .models import User
-from .serializers import UserSerializer, AdminSerializer
+from .serializers import  AdminSerializer
 from rest_framework.parsers import FormParser, MultiPartParser
 from .permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from django.contrib.auth import authenticate, login
+from djoser.views import UserViewSet as DjoserUserViewSet
 
 
-#viewset to enable authors  create, update details and delete account
-class UserViewSet(viewsets.ModelViewSet):
+# class UserViewSet(DjoserUserViewSet):
+# 	def perform_update(self, serializer):
+# 		super().perform_update(serializer)
+
+class UserViewSet(generics.GenericAPIView):
     queryset = User.objects.all()
-    serializer_class = UserSerializer
-    parser_classes = [FormParser, MultiPartParser]
+    serializer_class = UserCreateSerializer
+    # parser_classes = [FormParser, MultiPartParser]
 
-    def perform_create(self, serializer):
-        password = self.request.data.get('password')
-        serializer.save(password=self.request.data.get('password'))
- 
+    def post(self, request):
+        data = {**request.data, "role": "author"}
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid(raise_exception=True) :
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
+
+
 #sepration of concerns in roles. to ensure only admins can create an admin and view admin stuffs. Regular users(authors) cannot
 class AdminViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -63,6 +73,6 @@ class LoginViewSet(generics.CreateAPIView):
         else:
             return Response({'message': 'Invalid username or password'}, status=status.HTTP_401_UNAUTHORIZED)
 
-# class MyTokenObtainPairView(TokenObtainPairView):
-#     serializer_class = MyTokenObtainPairSerializer
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
 

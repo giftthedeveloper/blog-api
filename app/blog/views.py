@@ -1,13 +1,14 @@
 from rest_framework import generics, viewsets, status, response, mixins
 from .models import BlogPost
 from .serializers import BlogPostSerializer
-from ..permissions import CanEditBlogPostPermission
+from ..permissions import CanEditBlogPost
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.filters import SearchFilter
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.db.models import Q
+from rest_framework.parsers import FormParser, MultiPartParser
 
 class CustomPagination(PageNumberPagination):
     #allows max number of 20 posts per page
@@ -15,7 +16,21 @@ class CustomPagination(PageNumberPagination):
     page_size_query_param = 'page_size'  
     max_page_size = 20
 
-#get specific blogpost with pagination
+#class to create a blog 
+class BlogCreateViewSet(viewsets.GenericViewSet):
+    queryset = BlogPost.objects.all()
+    serializer_class = BlogPostSerializer
+    parser_classes = [FormParser, MultiPartParser]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()  
+            return response.Response(serializer.data, status=status.HTTP_201_CREATED)
+        return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+#class to get specific blogpost with pagination
 class BlogPostViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
     queryset = BlogPost.objects.all()
     serializer_class = BlogPostSerializer
@@ -23,7 +38,7 @@ class BlogPostViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
     filter_backends = [SearchFilter]
     search_fields = ['author__username', 'created_at', 'slug', 'title']
 
-#get all orders with the option of search fields, sorting by field, desc or asc
+#class to get all orders with the option of search fields, sorting by field, desc or asc
 class BlogListViewSet(viewsets.GenericViewSet):
     queryset = BlogPost.objects.all()
     serializer_class = BlogPostSerializer
@@ -71,3 +86,25 @@ class BlogListViewSet(viewsets.GenericViewSet):
         serializer = self.get_serializer(queryset, many=True)
         page = self.paginate_queryset(serializer.data)
         return self.get_paginated_response(page)
+
+
+
+class BlogPostUpdateViewSet(viewsets.GenericViewSet):
+    queryset = BlogPost.objects.all()
+    serializer_class = BlogPostSerializer
+    permission_classes = [ CanEditBlogPost]
+    parser_classes = [FormParser, MultiPartParser]
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return response.Response(serializer.data)
+
+    def get_queryset(self):
+        # Filter queryset to only include objects that the user has permission to edit
+        user = self.request.user
+        if user.is_authenticated:
+            return BlogPost.objects.filter(Q(author=user) | Q(blogpostpermission__user=user, blogpostpermission__permission_type='edit')).distinct()
+        return BlogPost.objects.none()

@@ -1,2 +1,2 @@
 from django.shortcuts import render
-from .blog.views import BlogPostViewSet, BlogListViewSet
+from .blog.views import BlogPostViewSet, BlogListViewSet, BlogCreateViewSet, BlogPostUpdateViewSet

@@ -39,13 +39,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     bio = models.TextField(blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
-    role = models.CharField(max_length=50, choices= user_roles, default='user')
+    role = models.CharField(max_length=50, choices= user_roles, default='author')
     date_joined = models.DateTimeField(auto_now_add=True)
     user_permissions = models.ManyToManyField(Permission, blank=True, related_name='user_permissions')
     groups = models.ManyToManyField(Group, blank=True, related_name='custom_user_set', related_query_name='custom_user')
 
     USERNAME_FIELD = 'username'		
-    REQUIRED_FIELDS = ['full_name', 'email']
+    REQUIRED_FIELDS = [ 'email']
 
     objects = UserManager()
 
