@@ -105,6 +105,8 @@ class BlogPostUpdateViewSet(viewsets.GenericViewSet):
     def get_queryset(self):
         # Filter queryset to only include objects that the user has permission to edit
         user = self.request.user
-        if user.is_authenticated:
+        print(user.id)
+        if user:
+            
             return BlogPost.objects.filter(Q(author=user) | Q(blogpostpermission__user=user, blogpostpermission__permission_type='edit')).distinct()
         return BlogPost.objects.none()

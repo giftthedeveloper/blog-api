@@ -11,7 +11,8 @@ urlpatterns = [
     path('blog/list',BlogListViewSet.as_view({'get': 'list'}), name='ordered-blog'),
     path('blog/create',BlogCreateViewSet.as_view({'post': 'create'}), name='create-a-blog'),
     # path('blog/update/<int:pk>',BlogPostUpdateViewSet.as_view({'patch': 'update'}), name='update-a-blog'),
-
+    #shared blog endpoint
+    #give access to another user
 
 ]
 
