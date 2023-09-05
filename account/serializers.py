@@ -23,8 +23,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
 
-        # Add custom claims
-        token['role'] = user.role  # assuming a "role" field on the user model
+        token['role'] = user.role 
         token['email'] = user.email
         token['username'] = user.username
         token['is_staff'] = user.is_staff

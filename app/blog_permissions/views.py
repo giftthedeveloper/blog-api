@@ -1,16 +1,20 @@
 
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets, mixins
 from rest_framework.response import Response
 from .models import BlogPostPermission
-from .serializers import GrantEditPermissionSerializer, SharedBlogSerializer
+from .serializers import GrantEditPermissionSerializer, SharedBlogSerializer, \
+    BlogPostPermissionSerializer
 from account.models import Author
 from .models import BlogPost  
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework.parsers import FormParser, MultiPartParser
-from rest_framework import permissions
+from rest_framework import permissions, decorators
+from django.db.models import Q
+from ..blog.serializers import BlogPostSerializer
 
-
+action = decorators.action
 class GrantEditPermissionView(generics.CreateAPIView):
     serializer_class = GrantEditPermissionSerializer
     parser_classes = [FormParser, MultiPartParser]
@@ -50,36 +54,52 @@ class GrantEditPermissionView(generics.CreateAPIView):
         else:
             return Response({"error": "Permission denied for Unauthorized user. You are not the owner of this blog post."}, status=status.HTTP_403_FORBIDDEN)
 
-#class to return list of blogs for a user alomgside with autheor acess information
 
+#class to return list of blogs the user has access to
 class SharedBlogViewSet(viewsets.GenericViewSet):
     serializer_class = SharedBlogSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    # List shared blogs with their details and authors with edit access
+    def get_queryset(self):
+        user = self.request.user  
+        if user.is_authenticated:
+            # Filter the blog posts where the user has edit access or is the owner
+            queryset = BlogPost.objects.filter(
+                Q(author=user) | Q(blogpostpermission__user=user, blogpostpermission__permission_type='edit')
+            ).distinct()
+        else:
+            queryset = BlogPost.objects.none() 
+        return queryset
+
     def list(self, request, *args, **kwargs):
-        user = self.request.user
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-        try:
-            shared_blog_ids = BlogPostPermission.objects.filter(user=user, permission_type='edit').values_list('blog_post__id', flat=True)
-            shared_blogs = BlogPost.objects.filter(id__in=shared_blog_ids)
-            shared_blogs_data = self.get_serializer(shared_blogs, many=True).data
 
-            # Getting authors with edit access to shared blogs
-            authors_with_access = BlogPostPermission.objects.filter(blog_post__in=shared_blog_ids, permission_type='edit').values_list('user__id', flat=True)
+class BlogPostWithPermissionsViewSet(viewsets.GenericViewSet):
+    queryset = BlogPostPermission.objects.all()
+    serializer_class = BlogPostPermissionSerializer
+
+    @action(detail=True, methods=['GET'])
+    def blog_authors_list(self, request, pk=None):
+        blog_post = get_object_or_404(BlogPost, pk=pk)
+        permissions = BlogPostPermission.objects.filter(blog_post=blog_post, permission_type__in=['edit', 'view'])
+
+        authors_with_access = []
+        for permission in permissions:
+            author = permission.user
             author_details = {
-                author.id: author.author_details for author in Author.objects.filter(id__in=authors_with_access)
+                "id": author.id,
+                "profile_image": author.profile_picture.url if author.profile_picture else None,
+                "username": author.username,
             }
+            authors_with_access.append(author_details)
 
-            # Add author details to shared blog data
-            for blog_data in shared_blogs_data:
-                blog_id = blog_data['id']
-                if blog_id in author_details:
-                    blog_data['authors_with_access'] = author_details[blog_id]
-                else:
-                    blog_data['authors_with_access'] = []
-
-            return Response(shared_blogs_data, status=status.HTTP_200_OK)
-
-        except:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        data = {
+            "blog_id": blog_post.id,
+            "blog_title": blog_post.title,
+            "blog_author": blog_post.author_details,
+            "authors_with_access": authors_with_access,
+        }
+        return Response(data)

@@ -1,8 +1,7 @@
 from django.db import models
-from ..authors.models import Author
 from ckeditor.fields import RichTextField
 from django.utils.text import slugify
-
+from account.models import Author
 
 class BlogPost(models.Model):
     title = models.CharField(max_length=2000)

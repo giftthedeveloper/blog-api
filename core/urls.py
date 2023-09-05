@@ -26,7 +26,7 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('account.urls')),
-    path('', include('app.urls')),
+    path('blog/', include('app.urls')),
 
     re_path(
         r"^api/docs/$",

@@ -1,6 +1,7 @@
 from ..blog.models import BlogPost
 from rest_framework import serializers
 from .models import BlogPostPermission
+from account.models import Author
 
 class BlogPostPermissionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -18,5 +19,23 @@ class SharedBlogSerializer(serializers.ModelSerializer):
         model = BlogPost
         fields = ['id', 'title', 'author_details']
 
-    # def get_author_details(self, obj):
-    #     return obj.author_details
+# class BlogPostPermissionSerializer(serializers.ModelSerializer):
+#     user = serializers.SerializerMethodField()
+
+#     class Meta:
+#         model = BlogPostPermission
+#         fields = ('user',)
+
+#     def get_user(self, obj):
+#         return obj.user.author_details  
+
+
+class BlogPostPermissionSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+    blog_post = SharedBlogSerializer(many=True, read_only=True)
+    class Meta:
+        model = BlogPostPermission
+        fields = ('user', 'blog_post')
+
+    def get_user(self, obj):
+        return obj.user.author_details  
