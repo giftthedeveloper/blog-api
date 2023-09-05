@@ -20,11 +20,14 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=[permissions.AllowAny],
+    authentication_classes=(),
 )
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('auth/', include('account.urls')),
+    path('', include('account.urls')),
+    path('blog/', include('app.urls')),
+
     re_path(
         r"^api/docs/$",
         schema_view.with_ui("swagger", cache_timeout=0),
