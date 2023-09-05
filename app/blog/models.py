@@ -1,11 +1,12 @@
 from django.db import models
-from ..authors.models import User
+from ..authors.models import Author
 from ckeditor.fields import RichTextField
 from django.utils.text import slugify
 
+
 class BlogPost(models.Model):
     title = models.CharField(max_length=2000)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(Author, on_delete=models.CASCADE)
     featured_image = models.ImageField(upload_to='blog/images', null=True, blank=True)
     content = RichTextField()
     slug = models.SlugField(null=True, blank=True)

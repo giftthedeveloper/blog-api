@@ -10,4 +10,9 @@ class BlogPostSerializer(serializers.ModelSerializer):
                   'created_at', 'updated_at', 'author_details')
         read_only_fields = ['slug']  
 
-   
+class BlogPostUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BlogPost
+        fields = ('id', 'title',  'featured_image', 'content', 'slug', 
+                  'created_at', 'updated_at', 'author_details')
+        read_only_fields = ['slug', 'author']  

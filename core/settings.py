@@ -146,7 +146,7 @@ CORS_ALLOWED_ORIGINS= os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
 
 CORS_ALLOWED_ORIGINS = CORS_ALLOWED_ORIGINS
 
-AUTH_USER_MODEL = 'account.user'  #'app.User'
+AUTH_USER_MODEL = 'account.author'  
 
 #authentication
 DJOSER = {

@@ -77,7 +77,7 @@ class UserManager(BaseUserManager):
         return user
 
 
-class User(AbstractBaseUser, PermissionsMixin):    
+class Author(AbstractBaseUser, PermissionsMixin):    
     user_roles= [('author', 'author'), ('admin', 'admin')]
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=50, unique=True)
@@ -96,5 +96,4 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     def __str__(self):
-        self.phone
         return self.email

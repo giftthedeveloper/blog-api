@@ -25,16 +25,21 @@
 
 
 from django.urls import path
-
 from rest_framework_simplejwt import views as simple_jwt_views
+from .views import UserViewSet, AdminUserView, MyTokenObtainPairView, UserUpdateViewSet
+from rest_framework.routers import DefaultRouter
 
-from .views import UserViewSet, AdminUserView, MyTokenObtainPairView
+router = DefaultRouter()
+    
+router.register(r'auth/update', UserUpdateViewSet, basename='update-user-details')
 
 urlpatterns= [
     # path("login/", simple_jwt_views.TokenObtainPairView.as_view(), name="login"),  
-    path("login/", MyTokenObtainPairView.as_view(), name="login"),  
-    path("refresh/", simple_jwt_views.TokenRefreshView.as_view(), name="refresh-token"),
-    path("verify/", simple_jwt_views.TokenVerifyView.as_view(), name="verify-token"),
-    path('register/', UserViewSet.as_view({"post": "create"}), name='register'),
-    path('register-admin/', AdminUserView.as_view(), name='register-admin'),
+    path("auth/login/", MyTokenObtainPairView.as_view(), name="login"),  
+    path("auth/refresh/", simple_jwt_views.TokenRefreshView.as_view(), name="refresh-token"),
+    path("auth/verify/", simple_jwt_views.TokenVerifyView.as_view(), name="verify-token"),
+    path('auth/signup/', UserViewSet.as_view({"post": "create"}), name='register-a-user'),
+    path('auth/signup-admin/', AdminUserView.as_view(), name='register-admin'),
 ]
+
+urlpatterns += router.urls

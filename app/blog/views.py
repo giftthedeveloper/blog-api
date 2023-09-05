@@ -1,6 +1,6 @@
 from rest_framework import generics, viewsets, status, response, mixins
 from .models import BlogPost
-from .serializers import BlogPostSerializer
+from .serializers import BlogPostSerializer, BlogPostUpdateSerializer
 from ..permissions import CanEditBlogPost
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.pagination import PageNumberPagination
@@ -9,6 +9,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.db.models import Q
 from rest_framework.parsers import FormParser, MultiPartParser
+from django.http import Http404, HttpResponseForbidden
 
 class CustomPagination(PageNumberPagination):
     #allows max number of 20 posts per page
@@ -91,22 +92,30 @@ class BlogListViewSet(viewsets.GenericViewSet):
 
 class BlogPostUpdateViewSet(viewsets.GenericViewSet):
     queryset = BlogPost.objects.all()
-    serializer_class = BlogPostSerializer
+    serializer_class = BlogPostUpdateSerializer
     permission_classes = [ CanEditBlogPost]
     parser_classes = [FormParser, MultiPartParser]
 
     def update(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            response_data = {'detail': 'Unauthorized. You must be authenticated and also be an author with permission to this blog to perform this action.'}
+            return response.Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
+
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return response.Response(serializer.data)
+        if serializer.is_valid() :
+            serializer.save()
+            return response.Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        else:
+            return response.Response(status=status.HTTP_403_FORBIDDEN)
 
     def get_queryset(self):
         # Filter queryset to only include objects that the user has permission to edit
+
         user = self.request.user
-        print(user.id)
-        if user:
-            
-            return BlogPost.objects.filter(Q(author=user) | Q(blogpostpermission__user=user, blogpostpermission__permission_type='edit')).distinct()
-        return BlogPost.objects.none()
+        if user.is_authenticated:
+            return BlogPost.objects.filter(
+                Q(author=user) | Q(blogpostpermission__user=user, blogpostpermission__permission_type='edit')
+            ).distinct()
+        else:
+            return BlogPost.objects.none()  # Return an empty queryset for anonymous users
